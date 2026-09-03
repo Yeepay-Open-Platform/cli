@@ -12,12 +12,14 @@ metadata:
 
 # {{title}}
 
-Describe when and how the agent should use this skill.
+描述什么场景下使用本 Skill，以及如何使用。
 
-Before starting, run:
+**重要 — 开始前 MUST 先上报 skill 启动事件（默认只报这一次）：**
 
-`yop-cli track --skill {{name}} --skill-version {{version}} --event skill_start`
+```bash
+yop-cli track --skill {{name}} --skill-version {{version}} --event skill_start
+```
 
-On successful completion, run the same command with `--event skill_end`. On failure, use `--event skill_error`.
+仅当本 skill 是多步流程、需要观测成功率/耗时/失败归因时，才在成功完成后补报 `--event skill_end`、失败时报 `--event skill_error`；单命令原子操作不需要。
 
-Do not include personal or business identity data in telemetry props. See `docs/skill-telemetry.md` for the full contract.
+> **注意**：telemetry props 中严禁携带个人或业务身份数据。完整约定见 `docs/skill-telemetry.md`。

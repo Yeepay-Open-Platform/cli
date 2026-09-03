@@ -74,7 +74,11 @@ func Track(input Input, version, defaultWebhook, executable string, debug io.Wri
 		debugf(debug, "telemetry dropped: webhook is not configured")
 		return
 	}
-	installID, reserved, err := prepare(input.Skill, input.EventType, time.Now())
+	action, _ := props["action"].(string)
+	if input.EventType != "custom" {
+		action = ""
+	}
+	installID, reserved, err := prepare(input.Skill, input.EventType, action, time.Now())
 	if err != nil {
 		debugf(debug, "telemetry dropped: %v", err)
 		return
@@ -185,14 +189,14 @@ func mask(value string) string {
 	return email.ReplaceAllString(value, `${1}***@${2}`)
 }
 
-func prepare(skill, eventType string, now time.Time) (installID string, reserved bool, err error) {
+func prepare(skill, eventType, action string, now time.Time) (installID string, reserved bool, err error) {
 	err = config.WithLock("telemetry", func() error {
 		var loadErr error
 		installID, loadErr = loadInstallID()
 		if loadErr != nil {
 			return loadErr
 		}
-		reserved, loadErr = reserve(skill, eventType, now)
+		reserved, loadErr = reserve(skill, eventType, action, now)
 		return loadErr
 	})
 	return installID, reserved, err
@@ -216,12 +220,12 @@ func loadInstallID() (string, error) {
 	return state.InstallID, nil
 }
 
-func reserve(skill, eventType string, now time.Time) (bool, error) {
+func reserve(skill, eventType, action string, now time.Time) (bool, error) {
 	state := map[string]int64{}
 	if err := config.ReadJSON("telemetry-state.json", &state); err != nil && !errors.Is(err, os.ErrNotExist) {
 		state = map[string]int64{}
 	}
-	key := skill + "\x00" + eventType
+	key := skill + "\x00" + eventType + "\x00" + action
 	if sentAt := state[key]; sentAt > 0 && now.UnixMilli()-sentAt < int64(time.Minute/time.Millisecond) {
 		return false, nil
 	}

@@ -228,6 +228,39 @@ func TestFirstRunTelemetryNoticeAppearsOnce(t *testing.T) {
 	}
 }
 
+func TestTrackDebouncesCustomEventsByAction(t *testing.T) {
+	dir := t.TempDir()
+	server, events := eventServer(t, 0)
+	defer server.Close()
+	configureWebhook(t, dir, server.URL)
+
+	track := func(props string) {
+		t.Helper()
+		args := []string{"track", "--skill", "demo", "--event", "custom"}
+		if props != "" {
+			args = append(args, "--props", props)
+		}
+		if _, _, err := runCLI(t, dir, nil, args...); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	track(`{"action":"scenario_confirmed"}`)
+	if got := receiveEvent(t, events).Props["action"]; got != "scenario_confirmed" {
+		t.Fatalf("first action = %v", got)
+	}
+	track(`{"action":"script_run"}`)
+	if got := receiveEvent(t, events).Props["action"]; got != "script_run" {
+		t.Fatalf("distinct action was debounced away: %v", got)
+	}
+	track(`{"action":"scenario_confirmed"}`)
+	expectNoEvent(t, events)
+	track(`{"note":"no action key"}`)
+	receiveEvent(t, events)
+	track(`{"note":"still no action key"}`)
+	expectNoEvent(t, events)
+}
+
 func TestTrackDebouncesAcrossProcesses(t *testing.T) {
 	dir := t.TempDir()
 	server, events := eventServer(t, 0)

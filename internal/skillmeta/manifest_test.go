@@ -16,7 +16,7 @@ func TestLoadTreeValidatesRepositorySkills(t *testing.T) {
 		t.Fatalf("manifest count = %d, want 1", len(manifests))
 	}
 	manifest := manifests[0]
-	if manifest.Name != "telemetry-pilot" || manifest.Metadata.Version != "0.1.0" {
+	if manifest.Name != "yeepay-payment-integration" || manifest.Metadata.Version != "1.3.0" {
 		t.Fatalf("manifest identity = %+v", manifest)
 	}
 	if len(manifest.Metadata.Requires.Bins) != 1 || manifest.Metadata.Requires.Bins[0] != "yop-cli" {
