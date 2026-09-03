@@ -1,92 +1,52 @@
-# Cli
+# YOP CLI
 
-易宝开放平台 cli 能力
+易宝开放平台命令行工具。
 
-## Getting started
+## 功能
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+- **版本查询**：`yop-cli --version` / `version`。
+- **配置管理**：`config set/get` 读写持久化配置；遵循系统用户配置目录约定，可用 `YOP_CONFIG_DIR` 覆盖。
+- **埋点开关**：`config telemetry on|off` 一键开关遥测，关闭后写入禁用标记彻底停止采集。
+- **匿名 Skill 埋点**：`track --skill --event [--skill-version] [--props]` 上报 `skill_start/skill_end/skill_error/custom` 事件；非阻塞异步发送，失败静默不影响主流程；自动脱敏手机号和邮箱，不采集业务身份；webhook 通过 ldflags 或 `YOP_TELEMETRY_WEBHOOK` 注入。
+- **Skill 生态**：skill 不编译进二进制，通过 Agent Skills CLI 分发；`go test ./...` 统一校验 frontmatter、依赖闭包/环和 `cliHelp` 对应的真实命令。
+- **跨平台分发**：单一 Go 二进制支持 darwin/linux/windows（x64/arm64），npm 包 postinstall 按平台安装并用 `checksums.txt` 校验完整性。
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+## 构建
 
-## Add your files
+需要 Go 1.23 或更高版本：
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
-
+```bash
+./build.sh
+./yop-cli --version
 ```
-cd existing_repo
-git remote add origin http://gitlab.yeepay.com/yop/cli.git
-git branch -M master
-git push -uf origin master
+
+发布时通过 ldflags 注入版本和多维表格自动化 webhook：
+
+```bash
+go build -ldflags "-X main.version=1.0.0 -X main.telemetryWebhook=https://example.test/hook" -o yop-cli .
 ```
 
-## Integrate with your tools
+GoReleaser 完成后会同步 npm 包版本和 `checksums.txt`，再执行 `npm pack`/`npm publish`。
 
-- [ ] [Set up project integrations](http://gitlab.yeepay.com/yop/cli/-/settings/integrations)
+## 配置
 
-## Collaborate with your team
+```bash
+yop-cli config set telemetry.webhook https://example.test/hook
+yop-cli config get telemetry.webhook
+yop-cli config telemetry off
+yop-cli config telemetry on
+```
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Automatically merge when pipeline succeeds](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+配置遵循系统用户配置目录约定；开发与测试可通过 `YOP_CONFIG_DIR` 指定独立目录。
 
-## Test and Deploy
+## Skill
 
-Use the built-in continuous integration in GitLab.
+Skill 不编译进二进制，使用 Agent Skills CLI 从仓库下载。当前 skill 内容尚未建设，仅保留埋点试点占位：
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing(SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+```bash
+npx -y skills add https://github.com/Yeepay-Open-Platform/cli -g -y
+```
 
-***
+埋点接入方式见 [Skill 埋点规范](docs/skill-telemetry.md)。
 
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thank you to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+每个 skill 必须声明 `metadata.requires.bins: ["yop-cli"]` 和可执行的 `metadata.cliHelp`。新增 skill 从 [`skill-template/SKILL.md.tmpl`](skill-template/SKILL.md.tmpl) 开始；`go test ./...` 会统一校验 frontmatter、skill 依赖闭包/环，以及 `cliHelp` 对应的真实命令。

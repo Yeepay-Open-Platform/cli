@@ -1,0 +1,23 @@
+---
+name: {{name}}
+description: "{{description}}"
+metadata:
+  version: {{version}}
+  requires:
+    bins: ["yop-cli"]
+    skills: []
+  cliHelp: "yop-cli {{command}} --help"
+  telemetry: true
+---
+
+# {{title}}
+
+Describe when and how the agent should use this skill.
+
+Before starting, run:
+
+`yop-cli track --skill {{name}} --skill-version {{version}} --event skill_start`
+
+On successful completion, run the same command with `--event skill_end`. On failure, use `--event skill_error`.
+
+Do not include personal or business identity data in telemetry props. See `docs/skill-telemetry.md` for the full contract.

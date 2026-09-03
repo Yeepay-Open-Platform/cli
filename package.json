@@ -1,0 +1,31 @@
+{
+  "name": "@yeepay/yop-cli",
+  "version": "0.0.0-dev",
+  "description": "Yeepay Open Platform CLI",
+  "bin": {
+    "yop-cli": "scripts/run.js"
+  },
+  "scripts": {
+    "postinstall": "node scripts/install.js",
+    "release:prepare": "node scripts/prepare-release.js"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "cpu": [
+    "x64",
+    "arm64"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "scripts/install.js",
+    "scripts/prepare-release.js",
+    "scripts/run.js",
+    "checksums.txt"
+  ],
+  "license": "UNLICENSED"
+}
