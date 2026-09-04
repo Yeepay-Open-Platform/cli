@@ -29,7 +29,7 @@ const messages = {
     step1Upgraded:  "已升级到 v%s",
     step1Fail:      "全局安装失败。运行以下命令重试: npm install -g %s",
     step2:          "安装 AI Skills",
-    step2Skip:      "已安装，跳过",
+    step2Skip:      "已安装，已更新到最新",
     step2Spinner:   "正在安装 Skills...",
     step2Done:      "Skills 已安装",
     step2Fail:      "Skills 安装失败。运行以下命令重试: npx skills add %s -y -g",
@@ -45,7 +45,7 @@ const messages = {
     step1Upgraded:  "Upgraded to v%s",
     step1Fail:      "Failed to install globally. Run manually: npm install -g %s",
     step2:          "Install AI skills",
-    step2Skip:      "Already installed. Skipped",
+    step2Skip:      "Already installed. Updated to latest",
     step2Spinner:   "Installing skills...",
     step2Done:      "Skills installed",
     step2Fail:      "Failed to install skills. Run manually: npx skills add %s -y -g",
@@ -198,6 +198,9 @@ async function stepInstallSkills(msg) {
   s.start(msg.step2Spinner);
   try {
     if (await skillsAlreadyInstalled()) {
+      await runSilentAsync("npx", ["-y", "skills", "update", "-g", "-y"], {
+        timeout: 120000,
+      });
       s.stop(msg.step2Skip);
       return;
     }
