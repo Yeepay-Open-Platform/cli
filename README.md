@@ -1,11 +1,10 @@
 # yop-cli
 
-> 易宝开放平台（YeePay）官方命令行工具 —— 面向商户开发者和 Coding Agent。
-> 对外发布：[Yeepay-Open-Platform/cli](https://github.com/Yeepay-Open-Platform/cli)
+易宝开放平台（YeePay）官方命令行工具 —— 面向商户开发者和 Coding Agent。
 
 ---
 
-## 这是什么
+## yop-cli是什么？
 
 yop-cli 由两部分组成：**Skills** 与 **CLI**。
 

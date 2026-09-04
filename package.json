@@ -26,7 +26,8 @@
     "scripts/install-wizard.js",
     "scripts/prepare-release.js",
     "scripts/run.js",
-    "checksums.txt"
+    "checksums.txt",
+    "CHANGELOG.md"
   ],
   "dependencies": {
     "@clack/prompts": "^1.2.0"

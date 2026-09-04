@@ -16,10 +16,18 @@ archives:
     format_overrides:
       - goos: windows
         formats: [zip]
+    files:
+      - README.md
+      - LICENSE.md
+      - CHANGELOG.md
 
 checksum:
   name_template: checksums.txt
 
-after:
-  hooks:
-    - node scripts/prepare-release.js {{ .Version }}
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^chore:'

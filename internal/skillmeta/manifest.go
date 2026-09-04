@@ -22,11 +22,11 @@ var (
 type Manifest struct {
 	Name        string   `yaml:"name"`
 	Description string   `yaml:"description"`
+	Version     string   `yaml:"version"`
 	Metadata    Metadata `yaml:"metadata"`
 }
 
 type Metadata struct {
-	Version   string       `yaml:"version"`
 	Requires  Requirements `yaml:"requires"`
 	CLIHelp   string       `yaml:"cliHelp"`
 	Telemetry bool         `yaml:"telemetry"`
@@ -100,8 +100,8 @@ func validate(manifest Manifest, directory string) error {
 	if manifest.Description == "" || utf8.RuneCountInString(manifest.Description) > 1024 {
 		return fmt.Errorf("description must contain 1-1024 characters")
 	}
-	if !validVersion.MatchString(manifest.Metadata.Version) {
-		return fmt.Errorf("metadata.version %q must be semantic versioning", manifest.Metadata.Version)
+	if !validVersion.MatchString(manifest.Version) {
+		return fmt.Errorf("version %q must be semantic versioning", manifest.Version)
 	}
 	if !contains(manifest.Metadata.Requires.Bins, requiredBinary) {
 		return fmt.Errorf("metadata.requires.bins must include %q", requiredBinary)

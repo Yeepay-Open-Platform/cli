@@ -16,7 +16,7 @@ func TestLoadTreeValidatesRepositorySkills(t *testing.T) {
 		t.Fatalf("manifest count = %d, want 1", len(manifests))
 	}
 	manifest := manifests[0]
-	if manifest.Name != "yeepay-payment-integration" || manifest.Metadata.Version != "1.3.0" {
+	if manifest.Name != "yeepay-payment-integration" || manifest.Version != "1.3.0" {
 		t.Fatalf("manifest identity = %+v", manifest)
 	}
 	if len(manifest.Metadata.Requires.Bins) != 1 || manifest.Metadata.Requires.Bins[0] != "yop-cli" {
@@ -35,7 +35,7 @@ func TestLoadTreeRejectsBrokenContracts(t *testing.T) {
 	}{
 		{
 			name:      "missing required binary",
-			skills:    map[string]string{"demo": "---\nname: demo\ndescription: Test skill\nmetadata:\n  version: 1.0.0\n  requires:\n    bins: []\n  cliHelp: \"yop-cli track --help\"\n  telemetry: true\n---\n"},
+			skills:    map[string]string{"demo": "---\nname: demo\ndescription: Test skill\nversion: 1.0.0\nmetadata:\n  requires:\n    bins: []\n  cliHelp: \"yop-cli track --help\"\n  telemetry: true\n---\n"},
 			wantError: "requires.bins",
 		},
 		{
@@ -85,8 +85,8 @@ func TestLoadTreeUsesSemanticVersioning(t *testing.T) {
 		t.Run("invalid "+version, func(t *testing.T) {
 			root := t.TempDir()
 			writeSkill(t, root, "demo", skillFileWithVersion("demo", version))
-			if _, err := LoadTree(root); err == nil || !strings.Contains(err.Error(), "metadata.version") {
-				t.Fatalf("LoadTree error = %v, want metadata.version error", err)
+			if _, err := LoadTree(root); err == nil || !strings.Contains(err.Error(), "version") {
+				t.Fatalf("LoadTree error = %v, want version error", err)
 			}
 		})
 	}
@@ -104,7 +104,7 @@ func skillFile(name, requiredSkill, cliHelp string) string {
 }
 
 func skillFileWithVersion(name, version string) string {
-	return "---\nname: " + name + "\ndescription: Test skill\nmetadata:\n  version: " + version + "\n  requires:\n    bins: [\"yop-cli\"]\n    skills: []\n  cliHelp: \"yop-cli track --help\"\n  telemetry: true\n---\n"
+	return "---\nname: " + name + "\ndescription: Test skill\nversion: " + version + "\nmetadata:\n  requires:\n    bins: [\"yop-cli\"]\n    skills: []\n  cliHelp: \"yop-cli track --help\"\n  telemetry: true\n---\n"
 }
 
 func writeSkill(t *testing.T, root, name, content string) {

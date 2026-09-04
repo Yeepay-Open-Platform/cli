@@ -1,0 +1,66 @@
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+      - run: go test ./...
+
+  release:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # GitHub Release
+      id-token: write # npm --provenance
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # goreleaser needs full git history/tags
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+
+      # prepare-release.js and npm publish need Node
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+
+      # Fail fast instead of shipping binaries with an empty telemetry webhook
+      # (main.go bakes it in via ldflags; a miss is silent).
+      - name: Guard telemetry webhook
+        run: test -n "$YOP_TELEMETRY_WEBHOOK"
+        env:
+          YOP_TELEMETRY_WEBHOOK: ${{ secrets.YOP_TELEMETRY_WEBHOOK }}
+
+      # Builds archives and creates the GitHub Release. The next step updates
+      # package.json + checksums.txt for the npm publish step below.
+      - uses: goreleaser/goreleaser-action@v6
+        with:
+          version: "~> v2"
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          YOP_TELEMETRY_WEBHOOK: ${{ secrets.YOP_TELEMETRY_WEBHOOK }}
+
+      - name: Prepare npm release
+        run: node scripts/prepare-release.js "${GITHUB_REF_NAME#v}"
+
+      # Must run AFTER the GitHub Release exists: postinstall downloads the
+      # binary from the Release matching package.json version.
+      - name: Publish to npm
+        run: npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
