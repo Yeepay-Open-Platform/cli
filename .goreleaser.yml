@@ -6,9 +6,24 @@ builds:
     env:
       - CGO_ENABLED=0
     ldflags:
-      - -s -w -X main.version={{ .Version }} -X main.telemetryWebhook={{ .Env.YOP_TELEMETRY_WEBHOOK }}
+      - -s -w -X github.com/Yeepay-Open-Platform/cli/internal/build.Version={{ .Version }} -X github.com/Yeepay-Open-Platform/cli/internal/build.Date={{ .Date }} -X main.telemetryWebhook={{ .Env.YOP_TELEMETRY_WEBHOOK }}
     goos: [darwin, linux, windows]
     goarch: [amd64, arm64]
+
+notarize:
+  macos:
+    - enabled: '{{ isEnvSet "MACOS_SIGN_P12" }}'
+      ids:
+        - yop-cli
+      sign:
+        certificate: "{{ .Env.MACOS_SIGN_P12 }}"
+        password: "{{ .Env.MACOS_SIGN_PASSWORD }}"
+      notarize:
+        issuer_id: "{{ .Env.MACOS_NOTARY_ISSUER_ID }}"
+        key_id: "{{ .Env.MACOS_NOTARY_KEY_ID }}"
+        key: "{{ .Env.MACOS_NOTARY_KEY_PATH }}"
+        wait: true
+        timeout: 20m
 
 archives:
   - name_template: "yop-cli-{{ .Version }}-{{ .Os }}-{{ .Arch }}"

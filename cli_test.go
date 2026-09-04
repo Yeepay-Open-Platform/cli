@@ -33,7 +33,7 @@ func binary(t *testing.T) string {
 			return
 		}
 		testBinary = filepath.Join(dir, "yop-cli")
-		cmd := exec.Command("go", "build", "-ldflags", "-X main.version=1.2.3", "-o", testBinary, ".")
+		cmd := exec.Command("go", "build", "-ldflags", "-X github.com/Yeepay-Open-Platform/cli/internal/build.Version=1.2.3", "-o", testBinary, ".")
 		cmd.Dir = "."
 		if output, err := cmd.CombinedOutput(); err != nil {
 			buildErr = fmt.Errorf("go build: %w\n%s", err, output)
@@ -48,7 +48,7 @@ func binary(t *testing.T) string {
 func runCLI(t *testing.T, configDir string, extraEnv []string, args ...string) (string, string, error) {
 	t.Helper()
 	cmd := exec.Command(binary(t), args...)
-	cmd.Env = append(os.Environ(), append([]string{"YOP_CONFIG_DIR=" + configDir}, extraEnv...)...)
+	cmd.Env = append(os.Environ(), append([]string{"YOP_CONFIG_DIR=" + configDir, "YOP_CLI_NO_UPDATE_NOTIFIER=1"}, extraEnv...)...)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -517,6 +517,7 @@ func TestCommandHelpIsAvailableAtDocumentedPaths(t *testing.T) {
 		{args: []string{"config", "get", "--help"}, want: "yop-cli config get <key>"},
 		{args: []string{"config", "telemetry", "--help"}, want: "yop-cli config telemetry <on|off>"},
 		{args: []string{"track", "--help"}, want: "yop-cli track --skill <name>"},
+		{args: []string{"update", "--help"}, want: "yop-cli update [--check]"},
 	} {
 		stdout, _, err := runCLI(t, dir, nil, test.args...)
 		if err != nil || !strings.Contains(stdout, test.want) {

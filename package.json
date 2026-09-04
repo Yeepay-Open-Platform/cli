@@ -1,13 +1,13 @@
 {
   "name": "@yeepay/yop-cli",
-  "version": "0.0.0-dev",
+  "version": "0.0.0-beta.0",
   "description": "Yeepay Open Platform CLI",
   "bin": {
     "yop-cli": "scripts/run.js"
   },
   "scripts": {
     "postinstall": "node scripts/install.js",
-    "release:prepare": "node scripts/prepare-release.js"
+    "release:check": "node scripts/release-preflight.js"
   },
   "os": [
     "darwin",
@@ -21,10 +21,13 @@
   "engines": {
     "node": ">=20.12.0"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Yeepay-Open-Platform/cli.git"
+  },
   "files": [
     "scripts/install.js",
     "scripts/install-wizard.js",
-    "scripts/prepare-release.js",
     "scripts/run.js",
     "checksums.txt",
     "CHANGELOG.md"

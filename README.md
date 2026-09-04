@@ -40,7 +40,7 @@ yop-cli 由两部分组成：**Skills** 与 **CLI**。
 **第 1 步 — 安装**
 
 ```bash
-npx -y @yeepay/yop-cli@latest install
+npx -y @yeepay/yop-cli@beta install
 ```
 
 **第 2 步 — 验证**
@@ -60,17 +60,17 @@ cd cli
 ./yop-cli --version
 ```
 
-发布流程：GoReleaser 构建多平台二进制（macOS / Linux / Windows，x64 / arm64）并同步 `checksums.txt`，npm 包 postinstall 按平台下载对应二进制并校验完整性。
-
 ## CLI 命令
 
 | 命令 | 描述 |
 | ---- | ---- |
 | `yop-cli --version` | 查看版本 |
+| `yop-cli update --check` | 按 Stable/Beta 通道检查新版本 |
+| `yop-cli update` | 更新 CLI 并同步全局 Skills |
 | `yop-cli config set <key> <value>` | 写入持久化配置 |
 | `yop-cli config get <key>` | 读取配置 |
 
-配置遵循系统用户配置目录约定；开发与测试可通过 `YOP_CONFIG_DIR` 指定独立目录。
+配置遵循系统用户配置目录约定；开发与测试可通过 `YOP_CONFIG_DIR` 指定独立目录。版本提示每天最多联网检查一次，可通过 `YOP_CLI_NO_UPDATE_NOTIFIER=1` 关闭。
 
 ## 目录结构
 

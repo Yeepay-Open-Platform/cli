@@ -7,29 +7,41 @@ import (
 	"os"
 	"strings"
 
+	"github.com/Yeepay-Open-Platform/cli/internal/build"
 	"github.com/Yeepay-Open-Platform/cli/internal/config"
 	"github.com/Yeepay-Open-Platform/cli/internal/telemetry"
+	"github.com/Yeepay-Open-Platform/cli/internal/update"
 )
 
 const commandName = "yop-cli"
 
-var (
-	version          = "dev"
-	telemetryWebhook = ""
-)
+var telemetryWebhook = ""
 
 func main() {
 	os.Exit(run(os.Args[1:], os.Stdout, os.Stderr))
 }
 
-func run(args []string, stdout, stderr io.Writer) int {
-	if len(args) == 1 && args[0] == "__track-send" {
-		telemetry.Send()
-		return 0
+func run(args []string, stdout, stderr io.Writer) (code int) {
+	if len(args) == 1 {
+		switch args[0] {
+		case "__track-send":
+			telemetry.Send()
+			return 0
+		case "__update-check":
+			update.RefreshCache(build.Version)
+			return 0
+		}
+	}
+	showUpdateNotice := len(args) == 0 || args[0] != "update"
+	if showUpdateNotice {
+		if info := update.CheckCached(build.Version); info != nil {
+			defer fmt.Fprintln(stderr, info.Message())
+		}
+		update.StartBackgroundCheck(build.Version)
 	}
 	printTelemetryNoticeOnce(stderr)
 	if len(args) == 1 && (args[0] == "--version" || args[0] == "version") {
-		fmt.Fprintf(stdout, "%s %s\n", commandName, version)
+		fmt.Fprintf(stdout, "%s %s\n", commandName, build.Version)
 		return 0
 	}
 	if len(args) == 0 {
@@ -41,6 +53,12 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return runConfig(args[1:], stdout, stderr)
 	case "track":
 		return runTrack(args[1:], stdout, stderr)
+	case "update":
+		if isHelp(args[1:]) {
+			fmt.Fprintln(stdout, "Usage: yop-cli update [--check] [--json] [--force]")
+			return 0
+		}
+		return update.Run(args[1:], build.Version, stdout, stderr)
 	case "help", "--help", "-h":
 		printHelp(stdout)
 		return 0
@@ -150,7 +168,7 @@ func runTrack(args []string, stdout, stderr io.Writer) int {
 	if err != nil {
 		return 0
 	}
-	telemetry.Track(input, version, telemetryWebhook, executable, stderr)
+	telemetry.Track(input, build.Version, telemetryWebhook, executable, stderr)
 	return 0
 }
 
@@ -162,6 +180,7 @@ Usage:
   yop-cli config set <key> <value>
   yop-cli config get <key>
   yop-cli config telemetry <on|off>
+  yop-cli update [--check] [--json] [--force]
   yop-cli track --skill <name> --event <type> [--skill-version <version>] [--props <json>]`))
 }
 
