@@ -32,6 +32,9 @@ func TestVersionComparisonAndChannel(t *testing.T) {
 }
 
 func TestCheckCachedUsesMatchingChannel(t *testing.T) {
+	t.Setenv("CI", "")
+	t.Setenv("BUILD_NUMBER", "")
+	t.Setenv("RUN_ID", "")
 	t.Setenv("YOP_CONFIG_DIR", t.TempDir())
 	if err := config.WriteJSON("update-state.json", state{LatestVersion: "0.0.0-beta.1", CheckedAt: 1, Channel: "beta"}); err != nil {
 		t.Fatal(err)
