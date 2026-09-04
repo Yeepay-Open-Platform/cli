@@ -1,6 +1,6 @@
 {
   "name": "@yeepay/yop-cli",
-  "version": "0.0.0-beta.0",
+  "version": "0.0.0-beta.1",
   "description": "Yeepay Open Platform CLI",
   "bin": {
     "yop-cli": "scripts/run.js"
