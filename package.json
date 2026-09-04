@@ -19,13 +19,17 @@
     "arm64"
   ],
   "engines": {
-    "node": ">=18"
+    "node": ">=20.12.0"
   },
   "files": [
     "scripts/install.js",
+    "scripts/install-wizard.js",
     "scripts/prepare-release.js",
     "scripts/run.js",
     "checksums.txt"
   ],
-  "license": "UNLICENSED"
+  "dependencies": {
+    "@clack/prompts": "^1.2.0"
+  },
+  "license": "Apache-2.0"
 }
