@@ -8,6 +8,7 @@ const { execFile } = require("child_process");
 // point below before main() runs.
 let p;
 
+const PKG = "@yeepay/yop-cli";
 const SKILLS_REPO = "Yeepay-Open-Platform/cli";
 const SKILL_NAME_PATTERN = /yeepay-/;
 // eslint-disable-next-line no-control-regex
@@ -21,6 +22,12 @@ const isWindows = process.platform === "win32";
 const messages = {
   zh: {
     setup:          "正在设置 Yop CLI...",
+    step1:          "正在安装 %s...",
+    step1Upgrade:   "正在升级 %s (v%s → v%s)...",
+    step1Skip:      "已安装 (v%s)，跳过",
+    step1Done:      "已全局安装",
+    step1Upgraded:  "已升级到 v%s",
+    step1Fail:      "全局安装失败。运行以下命令重试: npm install -g %s",
     step2:          "安装 AI Skills",
     step2Skip:      "已安装，跳过",
     step2Spinner:   "正在安装 Skills...",
@@ -31,6 +38,12 @@ const messages = {
   },
   en: {
     setup:          "Setting up Yop CLI...",
+    step1:          "Installing %s globally...",
+    step1Upgrade:   "Upgrading %s (v%s → v%s)...",
+    step1Skip:      "Already installed (v%s). Skipped",
+    step1Done:      "Installed globally",
+    step1Upgraded:  "Upgraded to v%s",
+    step1Fail:      "Failed to install globally. Run manually: npm install -g %s",
     step2:          "Install AI skills",
     step2Skip:      "Already installed. Skipped",
     step2Spinner:   "Installing skills...",
@@ -72,6 +85,40 @@ function fmt(template, ...values) {
   return template.replace(/%s/g, () => values[i++] ?? "");
 }
 
+/** Get the latest version of the package from the registry. Returns version or null. */
+async function getLatestVersion() {
+  try {
+    const out = await runSilentAsync("npm", ["view", PKG, "version"], { timeout: 15000 });
+    const ver = out.toString().trim();
+    return /^\d+\.\d+\.\d+/.test(ver) ? ver : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+/** Compare two semver strings. Returns true if a < b. */
+function semverLessThan(a, b) {
+  const pa = a.replace(/-.*$/, "").split(".").map(Number);
+  const pb = b.replace(/-.*$/, "").split(".").map(Number);
+  for (let i = 0; i < 3; i++) {
+    if ((pa[i] || 0) < (pb[i] || 0)) return true;
+    if ((pa[i] || 0) > (pb[i] || 0)) return false;
+  }
+  // Numeric parts tie: a prerelease (e.g. 1.2.0-beta.1) precedes its release (1.2.0).
+  return /-/.test(a) && !/-/.test(b);
+}
+
+/** Check whether the package is truly installed in npm global prefix. Returns version or null. */
+async function getGloballyInstalledVersion() {
+  try {
+    const out = await runSilentAsync("npm", ["list", "-g", PKG], { timeout: 15000 });
+    const match = out.toString().match(/@(\d+\.\d+\.\d+[^\s]*)/);
+    return match ? match[1] : "unknown";
+  } catch (_) {
+    return null;
+  }
+}
+
 /** Parse --lang from process.argv, returns "zh", "en", or null. */
 function parseLangArg() {
   const args = process.argv.slice(2);
@@ -104,6 +151,35 @@ async function stepSelectLang() {
     ],
   });
   return handleCancel(lang, messages.zh);
+}
+
+async function stepInstallGlobally(msg) {
+  const [installedVer, latestVer] = await Promise.all([
+    getGloballyInstalledVersion(),
+    getLatestVersion(),
+  ]);
+  const needsUpgrade = installedVer && latestVer && semverLessThan(installedVer, latestVer);
+
+  if (installedVer && !needsUpgrade) {
+    p.log.info(fmt(msg.step1Skip, installedVer));
+    return false;
+  }
+
+  const s = p.spinner();
+  if (needsUpgrade) {
+    s.start(fmt(msg.step1Upgrade, PKG, installedVer, latestVer));
+  } else {
+    s.start(fmt(msg.step1, PKG));
+  }
+  try {
+    // The global install's postinstall downloads the matching binary.
+    await runSilentAsync("npm", ["install", "-g", PKG], { timeout: 120000 });
+    s.stop(needsUpgrade ? fmt(msg.step1Upgraded, latestVer) : msg.step1Done);
+    return needsUpgrade;
+  } catch (_) {
+    s.stop(fmt(msg.step1Fail, PKG));
+    process.exit(1);
+  }
 }
 
 async function skillsAlreadyInstalled() {
@@ -146,10 +222,12 @@ async function main() {
 
   if (isInteractive) {
     p.intro(msg.setup);
+    await stepInstallGlobally(msg);
     await stepInstallSkills(msg);
     p.outro(msg.done);
   } else {
     console.log(msg.setup);
+    await stepInstallGlobally(msg);
     await stepInstallSkills(msg);
   }
 }

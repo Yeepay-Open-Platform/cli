@@ -40,7 +40,7 @@ yop-cli 由两部分组成：**Skills** 与 **CLI**。
 **第 1 步 — 安装**
 
 ```bash
-npx -y @yeepay/yop-cli@beta install
+npx -y @yeepay/yop-cli@latest install
 ```
 
 **第 2 步 — 验证**
